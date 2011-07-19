@@ -13,7 +13,7 @@ import (
 // NOTE: Assumes that any error opening the file for reading means that the file does not exist. This is not always true, but is probably the best behaviour anyway. There is rarely a usage case where you want to check if a file exists, but not if you can open it.
 func FileExists(name string) bool {
 	_, err := os.Stat(name)
-	
+
 	if err != nil {
 		return false
 	}
@@ -31,7 +31,7 @@ func findEnv(env []string, name string) string {
 }
 
 func parseEnv(variable string) (string, string) {
-	namevalue := strings.Split(variable, "=", 2)
+	namevalue := strings.SplitN(variable, "=", 2)
 	name := namevalue[0]
 	value := ""
 	if len(namevalue) > 1 {
@@ -66,7 +66,7 @@ func findCmd(PATH, cmd string) (string, os.Error) {
 			return cmd, nil
 		}
 	}
-	paths := strings.Split(PATH, ":", -1)
+	paths := strings.Split(PATH, ":")
 	for i := 0; i < len(paths); i++ {
 		lookpath := paths[i]
 		binpath := path.Join(lookpath, cmd)
@@ -82,21 +82,20 @@ func RunWithEnvAndWd(command string, args []string, env []string, wd string) (pr
 	//hho := exec.PassThrough
 	args = prepend(args, command)
 	env = mergeEnv(os.Environ(), env)
-	
-	
+
 	binpath, err := findCmd(findEnv(env, "PATH"), command)
 	if err != nil {
 		return nil, err
 	}
-	
+
 	cmd := new(exec.Cmd)
-	cmd.Path   = binpath
-	cmd.Args   = args
-	cmd.Env    = env
-	cmd.Dir    = wd
+	cmd.Path = binpath
+	cmd.Args = args
+	cmd.Env = env
+	cmd.Dir = wd
 	cmd.Stderr = os.Stderr
 	cmd.Stdout = os.Stdout
-	
+
 	err = cmd.Start()
 	if err != nil {
 		log.Print("Error running command ", command, ": ", err, "\n")
