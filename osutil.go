@@ -2,9 +2,10 @@
 package osutil
 
 import (
-	"os"
+	"errors"
 	"log"
-	"exec"
+	"os"
+	"os/exec"
 	"path"
 	"strings"
 )
@@ -59,7 +60,7 @@ func mergeEnv(base []string, overrides []string) []string {
 	return envslice
 }
 
-func findCmd(PATH, cmd string) (string, os.Error) {
+func findCmd(PATH, cmd string) (string, error) {
 	// If the name contains a /, e.g. framework/foo/blar or ./foo, then try the path directly.
 	if strings.Index(cmd, "/") != -1 {
 		if FileExists(cmd) {
@@ -74,10 +75,10 @@ func findCmd(PATH, cmd string) (string, os.Error) {
 			return binpath, nil
 		}
 	}
-	return "", os.NewError("Command " + cmd + " not found! Path is " + PATH)
+	return "", errors.New("Command " + cmd + " not found! Path is " + PATH)
 }
 
-func RunWithEnvAndWd(command string, args []string, env []string, wd string) (proc *exec.Cmd, err os.Error) {
+func RunWithEnvAndWd(command string, args []string, env []string, wd string) (proc *exec.Cmd, err error) {
 	//log.Println(command, args)
 	//hho := exec.PassThrough
 	args = prepend(args, command)
@@ -105,17 +106,17 @@ func RunWithEnvAndWd(command string, args []string, env []string, wd string) (pr
 }
 
 // More advanced, runs a program with a custom enviroment. Note that the normal enviroment is also passed here, as that is what is typically desired. Enviroment is a slice of strings, with each string usually having the form "NAME=VALUE". If you pass an enviroment string of the form NAME=VALUE that has the same name as an existing enviroment string, your value overwrites the value of the other variable.
-func RunWithEnv(command string, args []string, env []string) (proc *exec.Cmd, err os.Error) {
+func RunWithEnv(command string, args []string, env []string) (proc *exec.Cmd, err error) {
 	return RunWithEnvAndWd(command, args, env, ".")
 }
 
 // Simple way to run most programs. Searches for the program in PATH, and runs the first found program. Args need not contain the program name as the zeroth argument, it is prepended automatically.
-func Run(command string, args []string) (proc *exec.Cmd, err os.Error) {
+func Run(command string, args []string) (proc *exec.Cmd, err error) {
 	return RunWithEnv(command, args, []string{})
 }
 
 // Runs a command using Run(), but waits for it to complete before returning.
-func WaitRun(command string, args []string) (proc *exec.Cmd, err os.Error) {
+func WaitRun(command string, args []string) (proc *exec.Cmd, err error) {
 	proc, err = Run(command, args)
 	if err != nil {
 		return
